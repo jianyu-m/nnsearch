@@ -1,0 +1,8 @@
+.idea/*
+.DS_Store
+grids.data
+data/*
+out/*
+*.txt
+*.iml
+target/*
