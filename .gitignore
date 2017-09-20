@@ -6,3 +6,4 @@ out/*
 *.txt
 *.iml
 target/*
+project/*
