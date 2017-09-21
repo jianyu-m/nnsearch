@@ -247,14 +247,5 @@ object NNpre {
     val nnpre = NNpre.loadNN(100, 100)
     println("indexing loaded.")
     benchmark(1000, nnpre, 5)
-//    correctness_test(100000, nnpre, 5)
-    while(true) {
-      val input = readLine().split(" ")
-      val lat = input(0).toDouble
-      val long = input(1).toDouble
-      nnpre.query(lat, long, 5)._1.foreach(println)
-      println("linear search")
-      nnpre.query_linear(lat, long, 5).foreach(println)
-    }
   }
 }
