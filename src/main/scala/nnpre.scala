@@ -137,9 +137,11 @@ class NNpre(val row: Int, val col: Int) extends Serializable {
           val x_eps = eps._1
           val y_eps = eps._2
           if (x + x_eps >= 0 && x + x_eps < row && y + y_eps >= 0 && y + y_eps < col) {
-            val x_d = if (x_eps >= 1) x_eps else 0
-            val y_d = if (y_eps >= 1) y_eps else 0
-            val low_d = math.sqrt(math.pow((x + x_d) * per_sqrt - lat, 2) * x_eps + math.pow((y + y_d) * per_sqrt - long, 2) * y_eps)
+            val x_d = if (x_eps < 0) x_eps + 1 else x_eps
+            val y_d = if (y_eps < 0) y_eps + 1 else y_eps
+            val x_nonzero = if (x_eps != 0) 1 else 0
+            val y_nonzero = if (y_eps != 0) 1 else 0
+            val low_d = math.sqrt(math.pow((x + x_d) * per_sqrt - lat + min_lat, 2) * x_nonzero + math.pow((y + y_d) * per_sqrt - long + min_long, 2) * y_nonzero)
             if (low_d < max_d || k_set.length < k) {
               // update
               access_cell_c += 1
@@ -214,17 +216,17 @@ object NNpre {
 //       assert(grid_r <= lin_r + Double.MinValue * 10)
        println(grid_r)
        println(lin_r)
-       if (grid_r <= lin_r + Double.MinValue * 10) {
-         val k = 0
-         print(1)
+       if (grid_r >= lin_r + 0.1) {
+         println("not good")
        }
+       println()
      }
   }
 
   def main(args: Array[String]): Unit = {
     val nnpre = NNpre.loadNN(100, 100)
     println("indexing loaded.")
-    correctness_test(100000, nnpre, 5)
+//    correctness_test(100000, nnpre, 5)
     while(true) {
       val input = readLine().split(" ")
       val lat = input(0).toDouble
