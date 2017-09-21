@@ -82,36 +82,21 @@ class NNpre(val row: Int, val col: Int) extends Serializable {
     // records.take(10).foreach(println)
   }
 
-  def grid_d(lat: Double, long: Double, k: Int, k_set_in:List[DRecord], grid_records:List[Record]): (List[DRecord], Double, Double) = {
-    var min_d = if(k_set_in.nonEmpty) k_set_in.last.d else Double.MaxValue
-    var max_d:Double = if (k_set_in.nonEmpty) k_set_in.last.d else 0
+  def grid_d(lat: Double, long: Double, k: Int, k_set_in:List[DRecord], grid_records:List[Record]): List[DRecord] = {
     var k_set: List[DRecord] = k_set_in
     for (r <- grid_records) {
       val d = math.pow(r.lat - lat, 2) + math.pow(r.long - long, 2)
-      if (d < min_d) {
-        k_set = DRecord(r, d) :: k_set
-        min_d = d
-        if (d > max_d)
-          max_d = d
-        if (k_set.length > k) {
-          k_set = k_set.dropRight(1)
-          max_d = k_set.last.d
-        }
-      } else if (k_set.length < k) {
-        if (d > max_d) {
-          max_d = d
-        }
+      if (k_set.length < k) {
         k_set = insert(k_set, DRecord(r, d))(DROrdering)
-      } else if (d < max_d) {
+      } else if (d < k_set.last.d) {
         k_set = insert(k_set, DRecord(r, d))(DROrdering)
         k_set = k_set.dropRight(1)
-        max_d = k_set.last.d
       }
     }
-    (k_set, min_d, max_d)
+    k_set
   }
 
-  def query(lat: Double, long: Double, k: Int): List[DRecord] = {
+  def query(lat: Double, long: Double, k: Int): (List[DRecord], Int) = {
     var x = ((lat - min_lat) / per_sqrt).toInt
     var y = ((long - min_long) / per_sqrt).toInt
     if (x == row)
@@ -119,8 +104,9 @@ class NNpre(val row: Int, val col: Int) extends Serializable {
     if (y == col)
       y = y - 1
     val grid_records = grids(x)(y)
+    var inserted = false
 
-    var (k_set, min_d, max_d) = grid_d(lat, long, k, List(), grid_records)
+    var k_set = grid_d(lat, long, k, List(), grid_records)
     var access_cell_c = 1
     var running = true
     var point_list: List[(Int, Int)] = List((0, 0))
@@ -129,8 +115,15 @@ class NNpre(val row: Int, val col: Int) extends Serializable {
     visited += ((0, 0))
     while(running) {
       new_point_list = List()
+      inserted = false
       point_list.foreach(point => {
-        val epses = NNpre.cell_direction.map(eps => (point._1 + eps._1, point._2 + eps._2)).filter(eps => !visited.contains(eps))
+        val epses = NNpre.cell_direction.map(eps => (point._1 + eps._1, point._2 + eps._2)).filter(eps => {
+          val has = !visited.contains(eps)
+          if (!has) {
+            visited += eps
+          }
+          has
+        })
         new_point_list = epses ::: new_point_list
         epses.foreach(eps => {
           visited += eps
@@ -142,25 +135,22 @@ class NNpre(val row: Int, val col: Int) extends Serializable {
             val x_nonzero = if (x_eps != 0) 1 else 0
             val y_nonzero = if (y_eps != 0) 1 else 0
             val low_d = math.sqrt(math.pow((x + x_d) * per_sqrt - lat + min_lat, 2) * x_nonzero + math.pow((y + y_d) * per_sqrt - long + min_long, 2) * y_nonzero)
-            if (low_d < max_d || k_set.length < k) {
+            if (k_set.length < k || low_d < k_set.last.d) {
               // update
+              inserted = true
               access_cell_c += 1
-              val m = grid_d(lat, long, k, k_set, grids(x + x_eps)(y + y_eps))
-              k_set = m._1
-              min_d = m._2
-              max_d = m._3
+              k_set = grid_d(lat, long, k, k_set, grids(x + x_eps)(y + y_eps))
             }
           }
         })
       })
       /* compute lower bounds of each cell */
-      if (k_set.length >= k) {
+      if (k_set.length >= k && !inserted) {
         running = false
       }
       point_list = new_point_list
     }
-    println("access " + access_cell_c)
-    k_set
+    (k_set, access_cell_c)
   }
 
   def query_linear(lat: Double, long: Double, k: Int): List[DRecord] = {
@@ -168,7 +158,7 @@ class NNpre(val row: Int, val col: Int) extends Serializable {
     grids.foreach(grid => {
       grid.foreach(records => {
         val re = grid_d(lat, long, k, k_set, records)
-        k_set = re._1
+        k_set = re
       })
     })
     k_set
@@ -210,28 +200,59 @@ object NNpre {
      for (i <- 1 to n) {
        val lat = random.nextDouble() * nn.row * nn.per_sqrt + nn.min_lat
        val long = random.nextDouble() * nn.col * nn.per_sqrt + nn.min_long
-       val grid_r = nn.query(lat, long, k).map(_.d).sum
-       val lin_r = nn.query_linear(lat, long, k).map(_.d).sum
-//       print(grid_r, lin_r)
-//       assert(grid_r <= lin_r + Double.MinValue * 10)
-       println(grid_r)
-       println(lin_r)
-       if (grid_r >= lin_r + 0.1) {
-         println("not good")
+       if (lat < nn.max_lat && long < nn.max_long) {
+         val grid_r = nn.query(lat, long, k)._1.map(_.d).sum
+         val lin_r = nn.query_linear(lat, long, k).map(_.d).sum
+         //       print(grid_r, lin_r)
+         //       assert(grid_r <= lin_r + Double.MinValue * 10)
+         println(grid_r)
+         println(lin_r)
+         if (grid_r >= lin_r + 0.1) {
+           println("not good")
+         }
+         println()
        }
-       println()
      }
+  }
+
+  def benchmark(n: Int, nn: NNpre, k: Int): Unit = {
+    val random = new Random()
+    var access_requests: List[(Double, Double)] = List()
+    for (i <- 1 to n) {
+      val lat = random.nextDouble() * nn.row * nn.per_sqrt + nn.min_lat
+      val long = random.nextDouble() * nn.col * nn.per_sqrt + nn.min_long
+      if (lat < nn.max_lat && long < nn.max_long) {
+        access_requests ::= ((lat, long))
+      }
+    }
+    println("total request " + access_requests.length)
+    var total_access_cell = 0
+    val s = System.nanoTime()
+    for (r <- access_requests) {
+      total_access_cell += nn.query(r._1, r._2, k)._2
+    }
+    val e = System.nanoTime()
+    println("time: " + (e - s) / access_requests.length / 1000000 + "ms; cells: " +
+      total_access_cell / access_requests.length )
+
+    val s_l = System.nanoTime()
+    for (r <- access_requests) {
+      nn.query_linear(r._1, r._2, k)
+    }
+    val e_l = System.nanoTime()
+    println("time: " + (e - s) / access_requests.length / 1000000 + "ms")
   }
 
   def main(args: Array[String]): Unit = {
     val nnpre = NNpre.loadNN(100, 100)
     println("indexing loaded.")
+    benchmark(1000, nnpre, 5)
 //    correctness_test(100000, nnpre, 5)
     while(true) {
       val input = readLine().split(" ")
       val lat = input(0).toDouble
       val long = input(1).toDouble
-      nnpre.query(lat, long, 5).foreach(println)
+      nnpre.query(lat, long, 5)._1.foreach(println)
       println("linear search")
       nnpre.query_linear(lat, long, 5).foreach(println)
     }
