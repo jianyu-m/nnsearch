@@ -1,0 +1,15 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{query}\PYG{p}{(}\PYG{n}{lat}\PYG{p}{,} \PYG{n+nb}{long}\PYG{p}{,} \PYG{n}{k}\PYG{p}{):}
+  \PYG{n}{x} \PYG{o}{=} \PYG{p}{(}\PYG{n}{lat} \PYG{o}{\PYGZhy{}} \PYG{n}{min\PYGZus{}lat}\PYG{p}{)} \PYG{o}{/} \PYG{n}{grid\PYGZus{}size}
+  \PYG{n}{y} \PYG{o}{=} \PYG{p}{(}\PYG{n}{lat} \PYG{o}{\PYGZhy{}} \PYG{n}{min\PYGZus{}long}\PYG{p}{)} \PYG{o}{/} \PYG{n}{grid\PYGZus{}size}
+  \PYG{n}{k\PYGZus{}set} \PYG{o}{=} \PYG{n}{grid\PYGZus{}search}\PYG{p}{(}\PYG{n}{grids}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)(}\PYG{n}{y}\PYG{p}{),} \PYG{n}{k\PYGZus{}set}\PYG{p}{)}
+  \PYG{k}{while} \PYG{p}{(}\PYG{n}{true}\PYG{p}{):}
+    \PYG{k}{for} \PYG{n}{cell} \PYG{o+ow}{in} \PYG{n}{cells} \PYG{n}{layered} \PYG{n}{around} \PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{:}
+      \PYG{n}{d} \PYG{o}{=} \PYG{n}{dis}\PYG{p}{(}\PYG{n}{cell}\PYG{p}{,} \PYG{n}{lat}\PYG{p}{,} \PYG{n+nb}{long}\PYG{p}{)}
+      \PYG{n}{min\PYGZus{}d} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{d}\PYG{p}{,} \PYG{n}{min\PYGZus{}d}\PYG{p}{)}
+      \PYG{k}{if} \PYG{n}{d} \PYG{o}{\PYGZlt{}} \PYG{n}{k\PYGZus{}set}\PYG{o}{.}\PYG{n}{min} \PYG{o+ow}{or} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{k\PYGZus{}set}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{k}\PYG{p}{:}
+        \PYG{n}{k\PYGZus{}set} \PYG{o}{=} \PYG{n}{grid\PYGZus{}search}\PYG{p}{(}\PYG{n}{cell}\PYG{p}{,} \PYG{n}{k\PYGZus{}set}\PYG{p}{)}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{k\PYGZus{}set}\PYG{p}{)} \PYG{o}{\PYGZgt{}=} \PYG{n}{k} \PYG{o+ow}{and} \PYG{n}{k\PYGZus{}set}\PYG{o}{.}\PYG{n}{max} \PYG{o}{\PYGZlt{}} \PYG{n}{d\PYGZus{}min}\PYG{p}{):}
+      \PYG{k}{break}
+  \PYG{k}{return} \PYG{n}{k\PYGZus{}set}
+\end{Verbatim}

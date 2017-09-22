@@ -15,10 +15,11 @@ finds the k-nearest neighbors of q using the grid index.
 \subsection{Grid construction}
 Each data record is stored in a data structure named \v{Record}. The grids
 are stored in a multi-array for fast accesses. The grid construction algorithm
-is showed in Figure \ref{grid}. The construction needs two scan of the dataset.
-In the first scan, it finds the maximum latitude and longitude of all location.
+is showed in Listing \ref{grid}. The construction needs two scans of the dataset.
+In the first scan, it finds the maximum latitude and longitude of all location,
+determines the grid size and create the grid storage.
 Then in the second scan, put the record to its corresponding grid.
-
+\begin{listing}[bht]
 \begin{minted}
 [
   frame=lines,
@@ -26,21 +27,31 @@ Then in the second scan, put the record to its corresponding grid.
   fontsize=\footnotesize,
   linenos
 ]{bash}
-visited
-min_lat, min_long, max_lat, max_long are got in the first scan
-foreach (r <- records)
-  if not r in visited
+# visited
+# min_lat, min_long, max_lat, max_long are got in the first scan
+grid_size_lat = (max_lat - min_lat) / n
+grid_size_long = (max_long - min_long) / n
+grid_size = max(grid_size_lat, gird_size_long)
+
+for r in records:
+  if not r in visited:
     x = (r.lat - min_lat) / grid_size
     y = (r.long - min_long) / grid_size
     grids(x)(y) += r
 \end{minted}
-
+\label{grid}
+\caption{grid construction.}
+\end{listing}
 \subsection{k-nearest neighbour search on grids}
 A k-nearest neighbour search query accepts a parameter of
 location (latitude and longitude). It first finds the corresponding
 grid of the location, and then find a k-nearest locations in the grid.
-After that, it searches the layered cells. The algorithm is showed in
+After that, it searches the layered cells. A function \v{grid\_search}
+is used to access a cell and return the k-nn set. The \v{k\_set} is
+a list of the k-nn set order by the distance.
+The algorithm is showed in
 Figure \ref{knn}.
+\begin{listing}[bht]
 \begin{minted}
 [
   frame=lines,
@@ -48,27 +59,40 @@ Figure \ref{knn}.
   fontsize=\footnotesize,
   linenos
 ]{python}
-def (lat, long, k):
+def grid_search(grid_records, lat, long, k_set):
+  for (r <- grid_record):
+    if r < k_set.max or len(k_set) < k
+      k_set.insert(r)
+  rerurn k_set
+\end{minted}
+\caption{Single grid search.}
+\end{listing}
+
+\begin{listing}[bht]
+\begin{minted}
+[
+  frame=lines,
+  framesep=2mm,
+  fontsize=\footnotesize,
+  linenos
+]{python}
+def query(lat, long, k):
   x = (lat - min_lat) / grid_size
   y = (lat - min_long) / grid_size
   k_set = grid_search(grids(x)(y), k_set)
   while (true):
-    min_d
-    for (cell <- cells layered around x, y):
-      d = min(cell, lat, long)
+    for cell in cells layered around x, y:
+      d = dis(cell, lat, long)
       min_d = min(d, min_d)
       if d < k_set.min or len(k_set) < k:
         k_set = grid_search(cell, k_set)
     if (len(k_set) >= k and k_set.max < d_min):
       break
   return k_set
-
-def (grid_records, lat, long, k_set):
-  for (r <- grid_record):
-    if r < k_set.max or len(k_set) < k
-      k_set.insert(r)
-  rerurn k_set
 \end{minted}
+\label{knn}
+\caption{knn search algorithm.}
+\end{listing}
 In this algorithm, if the minimum distance between the cell and
 the location is larger than the maximum value in \v{k\_set},
 then the cell does not need to be access. This algorithm stop
