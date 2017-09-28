@@ -1,9 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-visited
-min\PYGZus{}lat, min\PYGZus{}long, max\PYGZus{}lat, max\PYGZus{}long are got in the first scan
-foreach \PYG{o}{(}r \PYGZlt{}\PYGZhy{} records\PYG{o}{)}
-  \PYG{k}{if} not r in visited
-    \PYG{n+nv}{x} \PYG{o}{=} \PYG{o}{(}r.lat \PYGZhy{} min\PYGZus{}lat\PYG{o}{)} / grid\PYGZus{}size
-    \PYG{n+nv}{y} \PYG{o}{=} \PYG{o}{(}r.long \PYGZhy{} min\PYGZus{}long\PYG{o}{)} / grid\PYGZus{}size
-    grids\PYG{o}{(}x\PYG{o}{)(}y\PYG{o}{)} +\PYG{o}{=} r
-\end{Verbatim}

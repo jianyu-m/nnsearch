@@ -18,7 +18,7 @@ are stored in a multi-array for fast accesses. The grid construction algorithm
 is showed in Figure \ref{grid}. The construction needs two scan of the dataset.
 In the first scan, it finds the maximum latitude and longitude of all location.
 Then in the second scan, put the record to its corresponding grid.
-
+\begin{listing}[ht]
 \begin{minted}
 [
   frame=lines,
@@ -26,21 +26,46 @@ Then in the second scan, put the record to its corresponding grid.
   fontsize=\footnotesize,
   linenos
 ]{bash}
-visited
-min_lat, min_long, max_lat, max_long are got in the first scan
+# visited
+# min_lat, min_long, max_lat, max_long are got in the first scan
 foreach (r <- records)
   if not r in visited
     x = (r.lat - min_lat) / grid_size
     y = (r.long - min_long) / grid_size
     grids(x)(y) += r
 \end{minted}
+\caption{Grid construction algorithm.}
+\label{grid}
+\end{listing}
 
 \subsection{k-nearest neighbour search on grids}
 A k-nearest neighbour search query accepts a parameter of
 location (latitude and longitude). It first finds the corresponding
 grid of the location, and then find a k-nearest locations in the grid.
-After that, it searches the layered cells. The algorithm is showed in
+After that, it searches the layered cells. A function called
+\v{grid\_d} (see Figure \ref{gridd}) is to search inside a grid. \v{k\_set} is list with k
+records ordered by its distance with the location. The full algorithm is showed in
 Figure \ref{knn}.
+
+\begin{listing}[ht]
+\begin{minted}
+[
+  frame=lines,
+  framesep=2mm,
+  fontsize=\footnotesize,
+  linenos
+]{python}
+def grid_d(grid_records, lat, long, k_set):
+  for (r <- grid_record):
+    if r < k_set.max or len(k_set) < k
+      k_set.insert(r)
+  rerurn k_set
+\end{minted}
+\caption{Function grid\_d.}
+\label{gridd}
+\end{listing}
+
+\begin{listing}[ht]
 \begin{minted}
 [
   frame=lines,
@@ -62,22 +87,19 @@ def (lat, long, k):
     if (len(k_set) >= k and k_set.max < d_min):
       break
   return k_set
-
-def (grid_records, lat, long, k_set):
-  for (r <- grid_record):
-    if r < k_set.max or len(k_set) < k
-      k_set.insert(r)
-  rerurn k_set
 \end{minted}
+\caption{K-Nearest Neighbours algorithm.}
+\label{knn}
+\end{listing}
 In this algorithm, if the minimum distance between the cell and
 the location is larger than the maximum value in \v{k\_set},
-then the cell does not need to be access. This algorithm stop
+then the cell does not need to be access. This algorithm stops
 when the minimum distance between the location and all cells in the layer
 (none of the cells in the layer has been accessed).
 
 \subsection{benchmark}
 Evaluation of the algorithm is focused of the time of constructing the grids
-and the average query time. Random locations were generated randomly and
+and the average query time. Locations were generated randomly and
 these locations are served as queries to the knn search system. The average
 query time for 10k queries is recorded. A simple linear scan algorithm is
 used for comparison. The result is showed in Table \ref{result}.
@@ -88,13 +110,20 @@ used for comparison. The result is showed in Table \ref{result}.
   \begin{tabular}{c|c|c|c}
     \textbf{name} & \textbf{construction time} & \textbf{query time} & \textbf{cell accessed}\\
     \hline
-    grid search & 10s & 43ms & 7800 \\
+    grid search（100 x 100) & 22s & 3ms & 1477 \\
     \hline
-    linear scan & N/A & 43ms & 10000
+    grid search（100 x 50) & 22s & 6ms & 799 \\
+    \hline
+    grid search（50 x 100) & 22s & 1ms & 380 \\
+    \hline
+    linear scan & N/A & 32ms & N/A
   \end{tabular}
   \caption{Evaluation result.}
   \label{result}
-
 \end{table}
+
+Table \ref{result} shows that linear scan has a much larger access time compared with
+grid search. This is because grid search can avoid unnecessary search. 50 x 100 grid
+has a better performance as it better suits the range of the train data.
 
 \end{document}
