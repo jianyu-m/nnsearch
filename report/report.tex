@@ -15,8 +15,9 @@ finds the k-nearest neighbors of q using the grid index.
 \subsection{Grid construction}
 Each data record is stored in a data structure named \v{Record}. The grids
 are stored in a multi-array for fast accesses. The grid construction algorithm
-is showed in Figure \ref{grid}. The construction needs two scan of the dataset.
-In the first scan, it finds the maximum latitude and longitude of all location.
+is showed in Listing \ref{grid}. The construction needs two scans of the dataset.
+In the first scan, it finds the maximum latitude and longitude of all location,
+determines the grid size and create the grid storage.
 Then in the second scan, put the record to its corresponding grid.
 \begin{listing}[ht]
 \begin{minted}
@@ -73,14 +74,30 @@ def grid_d(grid_records, lat, long, k_set):
   fontsize=\footnotesize,
   linenos
 ]{python}
-def (lat, long, k):
+def grid_search(grid_records, lat, long, k_set):
+  for (r <- grid_record):
+    if r < k_set.max or len(k_set) < k
+      k_set.insert(r)
+  rerurn k_set
+\end{minted}
+\caption{Single grid search.}
+\end{listing}
+
+\begin{listing}[bht]
+\begin{minted}
+[
+  frame=lines,
+  framesep=2mm,
+  fontsize=\footnotesize,
+  linenos
+]{python}
+def query(lat, long, k):
   x = (lat - min_lat) / grid_size
   y = (lat - min_long) / grid_size
   k_set = grid_search(grids(x)(y), k_set)
   while (true):
-    min_d
-    for (cell <- cells layered around x, y):
-      d = min(cell, lat, long)
+    for cell in cells layered around x, y:
+      d = dis(cell, lat, long)
       min_d = min(d, min_d)
       if d < k_set.min or len(k_set) < k:
         k_set = grid_search(cell, k_set)
