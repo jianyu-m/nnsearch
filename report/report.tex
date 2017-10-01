@@ -66,23 +66,6 @@ def grid_d(grid_records, lat, long, k_set):
 \label{gridd}
 \end{listing}
 
-\begin{listing}[ht]
-\begin{minted}
-[
-  frame=lines,
-  framesep=2mm,
-  fontsize=\footnotesize,
-  linenos
-]{python}
-def grid_search(grid_records, lat, long, k_set):
-  for (r <- grid_record):
-    if r < k_set.max or len(k_set) < k
-      k_set.insert(r)
-  rerurn k_set
-\end{minted}
-\caption{Single grid search.}
-\end{listing}
-
 \begin{listing}[bht]
 \begin{minted}
 [
